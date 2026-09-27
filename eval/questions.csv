@@ -1,0 +1,16 @@
+question,expected_sources
+How is the generated reward function injected into the environment file?,env_patch.py
+How are the environment class and config class names detected?,env_context.py
+What does the static check verify before training?,static_check.py
+How does the Tester run PPO training?,tester.py|ppo/runner.py
+How is the PPO training command built?,ppo/command.py
+How is the vLLM server launched and health-checked?,launch_server.py
+Which model and base URL does the pipeline use to call the LLM?,configs/app.yaml
+Which model path and port does the vLLM server use?,qwen_vllm_server/config.yaml
+How does the user choose an environment in the UI?,ui/task_form.py
+How are TensorBoard training curves shown in the UI?,ui/tensorboard_view.py
+How is the PPO training summary extracted from the logs?,ppo/summary.py
+How do I create the conda environments for the project?,README.md
+What happens in the figure-8 environment?,quadcopter_env_figure8.py|LRS_NAV_2026
+How does the moving target behave in the tracking environment?,quadcopter_env_tracking.py|LRS_NAV_2026
+What does the Critic agent evaluate?,pipeline/agents.py|pipeline/prompts.py|pipeline/prompts4B.py

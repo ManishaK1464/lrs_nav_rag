@@ -33,7 +33,7 @@ class RAG:
 
     def retrieve(self, question):
         # MMR = pick chunks that are relevant AND different from each other
-        return self.db.max_marginal_relevance_search(question, k=config.TOP_K, fetch_k=20)
+        return self.db.similarity_search(question, k=config.TOP_K)
 
     def answer(self, question):
         docs = self.retrieve(question)
