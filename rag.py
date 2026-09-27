@@ -6,37 +6,34 @@ Test from the terminal:
 import sys
 
 import torch
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 import config
+from store import get_vector_db
 
 SYSTEM_PROMPT = (
     "You answer questions about the LRS-Nav project. "
     "Use ONLY the context provided. "
-    "If the answer is not in the context, say: \"I don't know based on the documents.\" "
-    "Keep answers short and clear."
+    "Answer the question directly and briefly. "
+    "Do NOT explain code or describe how to find the answer unless the user asks for that. "
+    "If the answer is not in the context, say: \"I don't know based on the documents.\""
 )
 
 
 class RAG:
     def __init__(self):
-        # 1. Load the vector database built by ingest.py
-        embeddings = HuggingFaceEmbeddings(
-            model_name=config.EMBED_MODEL,
-            encode_kwargs={"normalize_embeddings": True},
-        )
-        self.db = FAISS.load_local(
-            config.INDEX_DIR, embeddings, allow_dangerous_deserialization=True  # safe: we built this file ourselves
-        )
+        # 1. Open the Chroma vector database built by ingest.py
+        self.db = get_vector_db()
+        if not self.db.get(limit=1)["ids"]:
+            raise RuntimeError("The database is empty. Run: python ingest.py")
         # 2. Load the LLM on CPU
         self.tokenizer = AutoTokenizer.from_pretrained(config.LLM_MODEL)
         self.model = AutoModelForCausalLM.from_pretrained(config.LLM_MODEL, torch_dtype=torch.float32)
         self.model.eval()
 
     def retrieve(self, question):
-        return self.db.similarity_search(question, k=config.TOP_K)
+        # MMR = pick chunks that are relevant AND different from each other
+        return self.db.max_marginal_relevance_search(question, k=config.TOP_K, fetch_k=20)
 
     def answer(self, question):
         docs = self.retrieve(question)

@@ -1,18 +1,23 @@
 # LRS-Nav Docs Assistant (RAG, CPU-only)
 
 A question-answering assistant over my project documents, built with an
-open-source Hugging Face LLM. Runs fully locally on a CPU: no API keys, no cloud.
+open-source Hugging Face LLM and a Chroma vector database. Runs fully locally on a CPU: no API keys, no cloud.
 
 ## How it works
-1. **Load**: reads PDF, Markdown, Python and YAML files from `data/`
-2. **Chunk**: splits them into ~800-character pieces
-3. **Embed**: turns each chunk into a vector (`BAAI/bge-small-en-v1.5`)
-4. **Store**: saves the vectors in a FAISS index
-5. **Retrieve**: finds the top 4 chunks for a question
-6. **Generate**: `Qwen2.5-1.5B-Instruct` answers using only those chunks, and shows its sources
+**Ingestion pipeline (`ingest.py`): a small ETL process**
+1. **Extract**: reads PDF, Markdown, Python and YAML files from `data/` (including subfolders)
+2. **Transform**: splits Python at classes/functions and text by paragraphs, removes duplicate chunks, and adds the file name to each chunk
+3. **Load**: embeds chunks (`BAAI/bge-small-en-v1.5`) and stores them in **Chroma**
+4. **Incremental**: each file gets a SHA-256 fingerprint; only new or changed files are re-embedded, and deleted files are removed from the database
+
+**Question answering (`rag.py`)**
+1. Retrieves the top 4 chunks with **MMR** (relevant *and* diverse)
+2. `Qwen2.5-1.5B-Instruct` answers using only those chunks
+3. Shows the source files with every answer
 
 ```
-question -> embed -> FAISS search -> top-k chunks -> prompt -> Qwen LLM -> answer + sources
+data/ -> load -> split -> dedupe -> embed -> Chroma
+question -> embed -> MMR search -> top-k chunks -> Qwen LLM -> answer + sources
 ```
 
 ## Setup
@@ -25,19 +30,24 @@ pip install -r requirements.txt
 
 ## Run
 ```bash
-# 1. put your documents in data/
-python ingest.py                                   # build the index
+python ingest.py                                   # build or update the database
+python ingest.py --rebuild                         # rebuild from scratch
 python rag.py "What does the Reviewer agent do?"   # quick test
 streamlit run app.py                               # chat UI
 ```
 
 ## Design choices
 - **Small models** so it runs on a normal laptop CPU
-- **Answers only from context**, and says "I don't know" otherwise, to reduce hallucination
-- **Sources shown** with every answer, so answers can be checked
+- **Chroma** vector DB: persistent, supports updates/deletes by ID and metadata filters
+- **Incremental ingestion** so only changed files are processed
+- **Answers only from context**, with sources shown, to reduce hallucination
 - **Documents are not in the repo** (`data/` is git-ignored)
 
+## Known limits
+- "List everything" questions are hard, because the model only sees the top-k chunks
+
 ## Next steps
-- Swap to Azure OpenAI + Azure AI Search for a cloud version
-- Add an evaluation set (questions + expected answers)
-- Hybrid search (keyword + vector)
+- Azure OpenAI + Azure AI Search for a cloud version
+- Scheduled or event-triggered ingestion
+- MCP server so agents can query tabular results
+- Evaluation set (questions + expected answers)

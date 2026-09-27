@@ -2,7 +2,10 @@
 
 # Folders
 DATA_DIR = "data"            # put your LRS-Nav files here (report PDF, .md, .py, .yaml)
-INDEX_DIR = "faiss_index"    # the vector database is saved here after ingest.py
+DB_DIR = "chroma_db"         # the Chroma vector database is saved here
+
+# Vector database
+COLLECTION_NAME = "lrs_nav_docs"
 
 # File types we read
 FILE_TYPES = [".pdf", ".md", ".txt", ".py", ".yaml", ".yml"]
