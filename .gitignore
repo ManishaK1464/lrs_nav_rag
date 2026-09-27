@@ -1,0 +1,6 @@
+data/*
+!data/.gitkeep
+faiss_index/
+__pycache__/
+.venv/
+lrs/
