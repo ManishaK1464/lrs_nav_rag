@@ -1,0 +1,10 @@
+# Install CPU-only torch FIRST (much smaller download):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+transformers
+sentence-transformers
+langchain-community
+langchain-text-splitters
+langchain-huggingface
+faiss-cpu
+pypdf
+streamlit
