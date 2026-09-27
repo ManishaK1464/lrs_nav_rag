@@ -3,6 +3,7 @@
 # Folders
 DATA_DIR = "data"            # put your LRS-Nav files here (report PDF, .md, .py, .yaml)
 DB_DIR = "chroma_db"         # the Chroma vector database is saved here
+KG_FILE = "data/kg_triples.csv"  # knowledge graph facts (private, like the other data)
 
 # Vector database
 COLLECTION_NAME = "lrs_nav_docs"
